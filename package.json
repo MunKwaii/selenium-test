@@ -1,0 +1,17 @@
+{
+  "name": "selenium-tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node run-all.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "mocha": "^11.7.6",
+    "selenium-webdriver": "^4.45.0"
+  }
+}
