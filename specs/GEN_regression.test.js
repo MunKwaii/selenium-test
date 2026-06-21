@@ -15,7 +15,9 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
 
   before(async function() {
     const options = new chrome.Options();
-    options.addArguments('--headless=new');
+    if (process.env.HEADLESS !== 'false') {
+      options.addArguments('--headless=new');
+    }
     options.addArguments('--no-sandbox');
     options.addArguments('--disable-dev-shm-usage');
     options.addArguments('--window-size=1280,800');
