@@ -66,7 +66,7 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await submitBtn.click(); // Gửi form trống
       
       // Tìm các thông báo lỗi validation
-      const errorTextEl = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Vui lòng')]")), 5000);
+      const errorTextEl = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Vui lòng nhập email.')]")), 5000);
       const errorClass = await errorTextEl.getAttribute('className');
       
       // BUG GEN_03: Sai màu sắc CSS đồng bộ của thông báo lỗi (sử dụng text-gray-500 thay vì text-red-600)
