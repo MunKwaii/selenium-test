@@ -45,7 +45,7 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
   describe('Đăng ký & Đăng nhập (GEN_01, GEN_02, GEN_03, GEN_17)', function() {
     it('GEN_01: Kiểm tra việc thiếu ký hiệu bắt buộc (*) trên Form Đăng Ký', async function() {
       await driver.get(config.baseUrl + '/register');
-      await driver.wait(until.elementLocated(By.id('register-email')), 10000);
+      await driver.wait(until.elementLocated(By.name('email')), 10000);
       
       const labels = await driver.findElements(By.css('label'));
       let hasRequiredStar = false;
@@ -62,7 +62,7 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
 
     it('GEN_03: Kiểm tra sai màu sắc CSS của thông báo lỗi trên Form Đăng Ký', async function() {
       await driver.get(config.baseUrl + '/register');
-      const submitBtn = await driver.wait(until.elementLocated(By.id('register-submit')), 10000);
+      const submitBtn = await driver.wait(until.elementLocated(By.xpath("//button[@type='submit' and contains(., 'Đăng ký')]")), 10000);
       await submitBtn.click(); // Gửi form trống
       
       // Tìm các thông báo lỗi validation
