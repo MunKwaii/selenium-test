@@ -14,3 +14,6 @@ module.exports = {
     studentId: 'admin123'
   }
 };
+
+//Chạy test có giao diện: npm test
+//Chạy test không có giao diện: $env:HEADLESS="true"; npm test
