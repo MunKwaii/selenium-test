@@ -4,7 +4,7 @@ const assert = require('assert');
 const config = require('../config');
 const LoginPage = require('../pages/login.page');
 
-describe('CCNPMM UTE Connect - Phân Hệ Giao Diện & Bảo mật (GUI/SEC) Regression Tests', function () {
+describe('CCNPMM UTE Connect - Phân Hệ Bảo Mật & Phân Quyền (SEC) Regression Tests', function () {
   this.timeout(40000);
   let driver;
   let loginPage;
@@ -77,6 +77,38 @@ describe('CCNPMM UTE Connect - Phân Hệ Giao Diện & Bảo mật (GUI/SEC) Re
         'password', 
         `BUG SEC_06: Trường mật khẩu lộ ký tự do có thuộc tính type="${inputType}" thay vì type="password"`
       );
+    });
+  });
+
+  describe('Bảo mật & Phân quyền URL (SEC_05)', function () {
+    it('SEC_05: Kiểm tra chặn truy cập trang riêng tư khi chưa đăng nhập', async function () {
+      // Đảm bảo không còn phiên đăng nhập cũ
+      await driver.get(config.baseUrl);
+      await slowDelay();
+      await driver.executeScript("window.localStorage.clear(); window.sessionStorage.clear();");
+      await driver.manage().deleteAllCookies();
+      await slowDelay();
+
+      // Bước 1: Nhập trực tiếp đường dẫn "/edit-profile"
+      await driver.sleep(2000); // Dừng lại 2 giây để chuẩn bị nhìn thanh địa chỉ
+      await driver.get(config.baseUrl + '/edit-profile');
+      await driver.sleep(2000); // Dừng lại 2 giây sau khi tải trang để kịp nhìn địa chỉ thay đổi
+
+      // Bước 2: Xác nhận bị chuyển hướng về trang Đăng nhập
+      await driver.wait(until.urlContains('/login'), 10000);
+      const currentUrl = await driver.getCurrentUrl();
+      assert.ok(
+        currentUrl.endsWith('/login') || currentUrl.includes('/login'),
+        `SEC_05: Hệ thống không tự động chuyển hướng về trang Đăng nhập khi chưa đăng nhập. URL hiện tại: ${currentUrl}`
+      );
+
+      // Thêm viền xanh quanh ô nhập email ở trang Đăng nhập để trực quan hóa việc chuyển hướng thành công
+      const emailInput = await driver.wait(
+        until.elementLocated(loginPage.emailInput), 
+        5000
+      );
+      await highlight(emailInput, 'green');
+      await slowDelay();
     });
   });
 });

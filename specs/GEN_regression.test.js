@@ -181,5 +181,54 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
         'BUG GEN_13: Hệ thống xóa bài viết ngay lập tức mà không hiển thị hộp thoại xác nhận'
       );
     });
+
+    it('GEN_16: Kiểm tra hệ thống khi đăng bài viết chỉ chứa khoảng trắng', async function () {
+      // Đi tới Dashboard (Bảng tin)
+      await postPage.navigateToFeed(config.baseUrl);
+      await slowDelay();
+
+      // Bước 1: Chọn khung tạo bài viết
+      const textEl = await driver.wait(until.elementLocated(postPage.postTextarea), 10000);
+      await safeClick(textEl, 'red');
+
+      // Bước 2: Nhập toàn khoảng trắng theo Test Data
+      await textEl.sendKeys('   ');
+      await slowDelay();
+
+      // Bước 3: Nhấn nút Đăng bài
+      const submitBtn = await driver.findElement(postPage.publishBtn);
+      await safeClick(submitBtn, 'green');
+      await slowDelay();
+
+      // Chờ xem có hiển thị thông báo lỗi "Nội dung không được để trống" hay không.
+      // Trên 0.67, lỗi sẽ xuất hiện ngay lập tức và giữ nguyên URL /dashboard.
+      // Trên 0.36, không có lỗi và hệ thống sẽ tạo bài đăng thành công rồi chuyển hướng sang trang /post/:id.
+      try {
+        const errorEl = await driver.wait(
+          until.elementLocated(By.xpath("//p[contains(@class, 'text-red-600') or contains(text(), 'không được để trống')]")), 
+          5000
+        );
+        const errorText = await errorEl.getText();
+        assert.ok(
+          errorText.includes('Nội dung không được để trống'),
+          `Kỳ vọng hiển thị lỗi chứa "Nội dung không được để trống", thực tế nhận được: "${errorText}"`
+        );
+
+        // Kiểm tra xem URL có bị chuyển đi không (phải giữ nguyên ở trang dashboard hoặc không chứa /post/)
+        const currentUrl = await driver.getCurrentUrl();
+        assert.ok(
+          !currentUrl.includes('/post/'),
+          `BUG GEN_16: Hệ thống chuyển hướng sang trang chi tiết bài viết dù bài viết chỉ chứa khoảng trắng`
+        );
+      } catch (e) {
+        // Nếu không tìm thấy thông báo lỗi hoặc xảy ra lỗi khác
+        const currentUrl = await driver.getCurrentUrl();
+        if (currentUrl.includes('/post/')) {
+          throw new Error('BUG GEN_16: Hệ thống tạo bài viết mới thành công và chuyển hướng dù nội dung chỉ chứa khoảng trắng (thiếu validation)');
+        } else {
+          throw e;
+        }
+      }
+    });
   });
 });

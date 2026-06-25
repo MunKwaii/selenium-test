@@ -18,7 +18,8 @@ console.log(`====================================================${colors.reset}
 
 const testSuites = [
   { name: 'Phân hệ Chung (GEN)', file: 'specs/GEN_regression.test.js' },
-  { name: 'Phân hệ Giao diện & Bảo mật (GUI/SEC)', file: 'specs/GUI_regression.test.js' }
+  { name: 'Phân hệ Bảo mật & Phân quyền (SEC)', file: 'specs/SEC_regression.test.js' },
+  { name: 'Phân hệ Quản trị (ADM)', file: 'specs/ADM_regression.test.js' }
 ];
 
 const results = [];
@@ -95,10 +96,16 @@ if (anyFailed) {
       if (res.name.includes('Chung')) {
         console.log(`  └─ [GEN_13 Fail]: Lỗi xóa bài không có hộp thoại xác nhận.`);
         console.log(`     -> Ý nghĩa: Hệ thống xóa bài viết ngay lập tức mà không có Popup xác nhận.`);
+        console.log(`  └─ [GEN_16 Fail]: Lỗi cho phép đăng bài viết chỉ chứa khoảng trắng.`);
+        console.log(`     -> Ý nghĩa: Hệ thống không kiểm tra khoảng trắng ở client, vẫn đăng bài thành công.`);
       }
-      if (res.name.includes('Giao diện')) {
+      if (res.name.includes('Bảo mật')) {
         console.log(`  └─ [SEC_06 Fail]: Lỗi lộ ký tự mật khẩu tại trang Đăng nhập.`);
         console.log(`     -> Ý nghĩa: Ô nhập mật khẩu bị lộ ký tự do có thuộc tính type="text" thay vì type="password".`);
+      }
+      if (res.name.includes('Quản trị')) {
+        console.log(`  └─ [ADM_13 Fail]: Lỗi tải lại trang (reload) khi tìm kiếm người dùng trong Admin Panel.`);
+        console.log(`     -> Ý nghĩa: Khi gõ ký tự vào ô tìm kiếm, trang bị reload hoàn toàn làm mất trạng thái.`);
       }
     }
   });
