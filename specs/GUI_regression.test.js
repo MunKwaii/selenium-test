@@ -3,67 +3,66 @@ const chrome = require('selenium-webdriver/chrome');
 const assert = require('assert');
 const config = require('../config');
 const LoginPage = require('../pages/login.page');
-const PostPage = require('../pages/post.page');
 
-describe('CCNPMM UTE Connect - Phân Hệ Giao Diện (GUI) Regression Tests', function() {
+describe('CCNPMM UTE Connect - Phân Hệ Giao Diện & Bảo mật (GUI/SEC) Regression Tests', function () {
   this.timeout(40000);
   let driver;
   let loginPage;
-  let postPage;
 
-  before(async function() {
+  before(async function () {
     const options = new chrome.Options();
-    if (process.env.HEADLESS !== 'false') {
+    if (process.env.HEADLESS === 'true') {
       options.addArguments('--headless=new');
     }
     options.addArguments('--no-sandbox');
     options.addArguments('--disable-dev-shm-usage');
     options.addArguments('--window-size=1280,800');
-    
+    options.excludeSwitches('enable-logging');
+    options.addArguments('--log-level=3');
+    options.addArguments('--silent');
+
     driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     loginPage = new LoginPage(driver);
-    postPage = new PostPage(driver);
   });
 
-  after(async function() {
+  after(async function () {
     if (driver) {
       await driver.quit();
     }
   });
 
-  describe('Giao diện Quên Mật Khẩu (GUI_19)', function() {
-    it('GUI_19: Kiểm tra hình ảnh minh họa trang Quên mật khẩu bị hỏng link', async function() {
-      await driver.get(config.baseUrl + '/auth/forgot-password');
-      
-      const imgEl = await driver.wait(until.elementLocated(By.css('img')), 10000);
-      const srcAttr = await imgEl.getAttribute('src');
-      
-      // BUG GUI_19: Lỗi hình ảnh minh họa trang Quên mật khẩu bị hỏng link (chứa /assets/broken-link-avatar-xyz.png)
-      assert.ok(srcAttr.includes('/assets/broken-link-avatar-xyz.png'), 'BUG GUI_19: Ảnh minh họa Quên mật khẩu chứa link hỏng broken-link-avatar-xyz.png');
-    });
-  });
+  // Hàm tự động dừng giữa các bước để giáo viên/bạn dễ quan sát trên màn hình Chrome
+  async function slowDelay() {
+    if (config.slowMotion && config.slowMotion > 0) {
+      await driver.sleep(config.slowMotion);
+    }
+  }
 
-  describe('Giao diện Bảng Tin & Bài Viết (GUI_12)', function() {
-    before(async function() {
-      // Đăng nhập
+  describe('Bảo mật form Đăng nhập (SEC_06)', function () {
+    it('SEC_06: Lỗi lộ ký tự mật khẩu', async function () {
       await loginPage.navigateTo(config.baseUrl);
-      await loginPage.login(config.testUser.email, config.testUser.password);
-      await driver.wait(until.urlContains('/dashboard'), 10000);
-    });
+      await slowDelay();
 
-    it('GUI_12: Kiểm tra hiển thị định dạng ngày tháng thô của Database (Raw ISO) tại Post Item', async function() {
-      await postPage.navigateToFeed(config.baseUrl);
-      await driver.sleep(1500);
-      
-      // Lấy text ngày đăng bài viết
-      const dateText = await postPage.getPostDateText();
-      
-      // Kiểm tra định dạng ngày thô ISO (ví dụ: chứa ký tự 'T' và kết thúc bằng 'Z' hoặc khớp với định dạng ISO)
-      // Mẫu: 2026-06-20T16:15:22.000Z
-      const isoRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-      
-      // BUG GUI_12: Hiển thị định dạng ngày tháng thô của Database (Raw ISO)
-      assert.ok(isoRegex.test(dateText), `BUG GUI_12: Ngày tháng hiển thị dạng thô (${dateText}) thay vì định dạng tiếng Việt thân thiện`);
+      // Tìm trường input Mật khẩu
+      const passwordInput = await driver.wait(
+        until.elementLocated(loginPage.passwordInput), 
+        10000
+      );
+
+      // Điền mật khẩu vào ô để thầy dễ quan sát trực tiếp lỗi lộ ký tự dạng text
+      await passwordInput.sendKeys('Password@123');
+      await slowDelay();
+
+      // Lấy thuộc tính type của trường mật khẩu
+      const inputType = await passwordInput.getAttribute('type');
+
+      // Khẳng định: Trường mật khẩu phải có thuộc tính type="password" để ẩn ký tự gõ.
+      // Assert này sẽ FAIL do lỗi thực tế type="text" trong mã nguồn.
+      assert.strictEqual(
+        inputType, 
+        'password', 
+        `BUG SEC_06: Trường mật khẩu lộ ký tự do có thuộc tính type="${inputType}" thay vì type="password"`
+      );
     });
   });
 });
