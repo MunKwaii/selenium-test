@@ -27,6 +27,8 @@ describe('CCNPMM UTE Connect - Phân Hệ Giao Diện & Bảo mật (GUI/SEC) Re
 
   after(async function () {
     if (driver) {
+      // Dừng lại 3 giây cuối cùng trước khi tắt trình duyệt để thầy giáo/bạn kịp nhìn giao diện
+      await driver.sleep(3000);
       await driver.quit();
     }
   });
@@ -35,6 +37,17 @@ describe('CCNPMM UTE Connect - Phân Hệ Giao Diện & Bảo mật (GUI/SEC) Re
   async function slowDelay() {
     if (config.slowMotion && config.slowMotion > 0) {
       await driver.sleep(config.slowMotion);
+    }
+  }
+
+  // Hàm khoanh vùng viền đỏ/xanh quanh thẻ HTML đang thao tác để dễ quan sát trực quan
+  async function highlight(element, color = 'red') {
+    if (config.slowMotion && config.slowMotion > 0) {
+      await driver.executeScript(
+        `arguments[0].style.outline = '3px solid ${color}'; arguments[0].style.outlineOffset = '2px';`, 
+        element
+      );
+      await driver.sleep(800);
     }
   }
 
@@ -50,6 +63,7 @@ describe('CCNPMM UTE Connect - Phân Hệ Giao Diện & Bảo mật (GUI/SEC) Re
       );
 
       // Điền mật khẩu vào ô để thầy dễ quan sát trực tiếp lỗi lộ ký tự dạng text
+      await highlight(passwordInput, 'red');
       await passwordInput.sendKeys('Password@123');
       await slowDelay();
 

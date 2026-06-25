@@ -6,7 +6,7 @@ const LoginPage = require('../pages/login.page');
 const PostPage = require('../pages/post.page');
 
 describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', function () {
-  this.timeout(40000);
+  this.timeout(50000);
   let driver;
   let loginPage;
   let postPage;
@@ -30,14 +30,27 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
 
   after(async function () {
     if (driver) {
+      // Dừng lại 3 giây cuối cùng trước khi tắt trình duyệt để thầy giáo/bạn kịp nhìn giao diện
+      await driver.sleep(3000);
       await driver.quit();
     }
   });
 
-  // Hàm tự động dừng giữa các bước để giáo viên/bạn dễ quan sát trên màn hình Chrome
+  // Hàm tự động dừng giữa các bước
   async function slowDelay() {
     if (config.slowMotion && config.slowMotion > 0) {
       await driver.sleep(config.slowMotion);
+    }
+  }
+
+  // Hàm khoanh vùng viền đỏ/xanh quanh thẻ HTML đang thao tác để dễ quan sát trực quan
+  async function highlight(element, color = 'red') {
+    if (config.slowMotion && config.slowMotion > 0) {
+      await driver.executeScript(
+        `arguments[0].style.outline = '3px solid ${color}'; arguments[0].style.outlineOffset = '2px';`, 
+        element
+      );
+      await driver.sleep(800);
     }
   }
 
@@ -46,18 +59,21 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await loginPage.navigateTo(config.baseUrl);
       await slowDelay();
 
-      // Điền Email từng bước
+      // Viền đỏ ô Email và điền giá trị
       const emailEl = await driver.wait(until.elementLocated(loginPage.emailInput), 10000);
+      await highlight(emailEl, 'red');
       await emailEl.sendKeys(config.testUser.email);
       await slowDelay();
       
-      // Điền mật khẩu
+      // Viền đỏ ô Mật khẩu và điền giá trị
       const passwordEl = await driver.findElement(loginPage.passwordInput);
+      await highlight(passwordEl, 'red');
       await passwordEl.sendKeys(config.testUser.password);
       await slowDelay();
 
-      // Click Đăng nhập
+      // Viền xanh nút Đăng nhập và click
       const submitBtn = await driver.findElement(loginPage.loginBtn);
+      await highlight(submitBtn, 'green');
       await submitBtn.click();
       
       // Chờ chuyển hướng về trang chủ '/' sau khi đăng nhập thành công
@@ -69,6 +85,7 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
         until.elementLocated(By.xpath("//button[contains(., 'Đăng xuất')]")), 
         10000
       );
+      await highlight(logoutBtn, 'blue');
       const isDisplayed = await logoutBtn.isDisplayed();
       assert.ok(isDisplayed, 'Đăng nhập thành công nhưng không tìm thấy nút Đăng xuất');
     });
@@ -80,14 +97,16 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await postPage.navigateToFeed(config.baseUrl);
       await slowDelay();
       
-      // Soạn bài viết mới
+      // Khoanh vùng khung soạn bài viết và điền dữ liệu
       const content = 'Bài viết của Tài';
       const textEl = await driver.wait(until.elementLocated(postPage.postTextarea), 10000);
+      await highlight(textEl, 'red');
       await textEl.sendKeys(content);
       await slowDelay();
 
-      // Click Đăng bài
+      // Khoanh vùng nút Đăng bài và click
       const submit = await driver.findElement(postPage.publishBtn);
+      await highlight(submit, 'green');
       await submit.click();
       
       // Chờ điều hướng đến trang chi tiết bài viết (hoặc hiển thị thông báo thành công)
@@ -98,11 +117,12 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await postPage.navigateToFeed(config.baseUrl);
       await slowDelay();
 
-      // Lấy phần tử bài viết đầu tiên trên bảng tin
+      // Lấy phần tử bài viết đầu tiên trên bảng tin và khoanh vùng màu xanh lá cây để verify
       const firstPostTextEl = await driver.wait(
         until.elementLocated(By.xpath("//div[contains(@class, 'prose') or contains(@class, 'text-slate-800')]")),
         10000
       );
+      await highlight(firstPostTextEl, 'green');
       const firstPostText = await firstPostTextEl.getText();
 
       // Kiểm tra nội dung bài viết mới có trùng khớp và nằm ở đầu bảng tin không
@@ -117,8 +137,14 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await postPage.navigateToFeed(config.baseUrl);
       await slowDelay();
 
-      // Click nút xóa bài viết đầu tiên (bài viết vừa tạo ở test case trước)
-      await postPage.deleteFirstPost();
+      // Định vị nút xóa của bài viết đầu tiên và khoanh viền đỏ quanh nó trước khi bấm
+      const deleteBtnEl = await driver.wait(until.elementLocated(postPage.deleteBtn), 10000);
+      await highlight(deleteBtnEl, 'red');
+
+      // Click nút xóa
+      await deleteBtnEl.click();
+      
+      // Dừng lại 2 giây để người dùng quan sát: bài viết biến mất ngay tức khắc mà KHÔNG có popup nào hiện lên
       await slowDelay();
 
       // Kiểm tra xem có hộp thoại xác nhận (window alert/confirm) nào xuất hiện không
