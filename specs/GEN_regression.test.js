@@ -54,6 +54,14 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
     }
   }
 
+  // Hàm click an toàn: cuộn phần tử ra giữa màn hình để tránh bị Header/Navbar che khuất, sau đó click bằng JavaScript
+  async function safeClick(element, color = 'green') {
+    await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
+    await slowDelay();
+    await highlight(element, color);
+    await driver.executeScript("arguments[0].click();", element);
+  }
+
   describe('Đăng nhập (GEN_01)', function () {
     it('GEN_01: Đăng nhập thành công', async function () {
       await loginPage.navigateTo(config.baseUrl);
@@ -71,10 +79,9 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await passwordEl.sendKeys(config.testUser.password);
       await slowDelay();
 
-      // Viền xanh nút Đăng nhập và click
+      // Viền xanh nút Đăng nhập và click an toàn
       const submitBtn = await driver.findElement(loginPage.loginBtn);
-      await highlight(submitBtn, 'green');
-      await submitBtn.click();
+      await safeClick(submitBtn, 'green');
       
       // Chờ chuyển hướng về trang chủ '/' sau khi đăng nhập thành công
       await driver.wait(until.urlIs(config.baseUrl + '/'), 15000);
@@ -104,10 +111,9 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await textEl.sendKeys(content);
       await slowDelay();
 
-      // Khoanh vùng nút Đăng bài và click
+      // Bấm nút Đăng bài an toàn bằng safeClick
       const submit = await driver.findElement(postPage.publishBtn);
-      await highlight(submit, 'green');
-      await submit.click();
+      await safeClick(submit, 'green');
       
       // Chờ điều hướng đến trang chi tiết bài viết (hoặc hiển thị thông báo thành công)
       await driver.wait(until.urlContains('/post/'), 10000);
@@ -117,11 +123,13 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await postPage.navigateToFeed(config.baseUrl);
       await slowDelay();
 
-      // Lấy phần tử bài viết đầu tiên trên bảng tin và khoanh vùng màu xanh lá cây để verify
+      // Lấy phần tử bài viết đầu tiên trên bảng tin và cuộn nó ra giữa màn hình để người xem dễ quan sát
       const firstPostTextEl = await driver.wait(
         until.elementLocated(By.xpath("//div[contains(@class, 'prose') or contains(@class, 'text-slate-800')]")),
         10000
       );
+      await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", firstPostTextEl);
+      await slowDelay();
       await highlight(firstPostTextEl, 'green');
       const firstPostText = await firstPostTextEl.getText();
 
@@ -137,14 +145,21 @@ describe('CCNPMM UTE Connect - Phân Hệ Chung (GEN) Regression Tests', functio
       await postPage.navigateToFeed(config.baseUrl);
       await slowDelay();
 
-      // Định vị nút xóa của bài viết đầu tiên và khoanh viền đỏ quanh nó trước khi bấm
-      const deleteBtnEl = await driver.wait(until.elementLocated(postPage.deleteBtn), 10000);
-      await highlight(deleteBtnEl, 'red');
+      // 1. Định vị bài viết cần xóa, cuộn nó ra giữa màn hình và khoanh viền xanh dương để đánh dấu
+      const firstPostTextEl = await driver.wait(
+        until.elementLocated(By.xpath("//div[contains(@class, 'prose') or contains(@class, 'text-slate-800')]")),
+        10000
+      );
+      await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", firstPostTextEl);
+      await slowDelay();
+      await highlight(firstPostTextEl, 'blue');
+      await slowDelay();
 
-      // Click nút xóa
-      await deleteBtnEl.click();
+      // 2. Định vị nút xóa của bài viết này và click an toàn bằng safeClick (sẽ cuộn nút bấm và viền đỏ)
+      const deleteBtnEl = await driver.wait(until.elementLocated(postPage.deleteBtn), 10000);
+      await safeClick(deleteBtnEl, 'red');
       
-      // Dừng lại 2 giây để người dùng quan sát: bài viết biến mất ngay tức khắc mà KHÔNG có popup nào hiện lên
+      // Dừng lại 2 giây để quan sát kết quả
       await slowDelay();
 
       // Kiểm tra xem có hộp thoại xác nhận (window alert/confirm) nào xuất hiện không
