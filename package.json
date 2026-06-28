@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "pretest": "taskkill /f /im chromedriver.exe /t 2>nul || exit 0",
     "test": "node run-all.js"
   },
   "keywords": [],
